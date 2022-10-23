@@ -9,8 +9,12 @@ export default async (req: Request, res: Response) => {
   try {
     const { filters, playlist, userId } = req.body;
     const findedtracks = await getTrackByTags(filters);
-    const { id } = await createPlaylist({ playlist, userId });
 
+    if (findedtracks.length === 0) {
+      return res.status(200).json({ ok: true, message: "no tracks by tags" })
+    }
+
+    const { id } = await createPlaylist({ playlist, userId });
     const uris = findedtracks.map(({ uri }) => uri);
     const savedTracks = await addTrackToPlaylist({ id, uris })
 
@@ -22,22 +26,29 @@ export default async (req: Request, res: Response) => {
 
 const getTrackByTags = async (filters: string) => {
   const splitedFilters = filters.split(";");
-  console.log("🚀 ~ splitedFilters", splitedFilters)
 
   const resolvePromises = splitedFilters.map(async query => {
     let isfindedQuery = false;
-    let nextQuery = `q=${query}&type=track`;
+    let nextQuery = `query=${query}&type=track`;
     while (!isfindedQuery) {
-      const findedTracks = await getTrack(nextQuery);
-      const items = findedTracks.tracks.items;
+      const { tracks } = await getTrack(nextQuery);
+
+      if (tracks.items.length === 0) {
+        isfindedQuery = true;
+        return null
+      }
+
+      const [, next ] = tracks.next.split("search?");
+      const items = tracks.items;
       const item = items.find(item => item.name.toUpperCase() === query.toUpperCase());
+
       isfindedQuery = item !== undefined;
-      nextQuery = findedTracks.tracks.next;
+      nextQuery = next
       return item
     }
   });
 
-  const promisesFilter = resolvePromises.filter(promise => promise !== null && promise !== undefined)
-  const resolved = await Promise.all(promisesFilter);
-  return resolved;
+  const resolvedTrack = await Promise.all(resolvePromises);
+  const filteredTrack = resolvedTrack.filter(track => track !== null);
+  return filteredTrack;
 }
