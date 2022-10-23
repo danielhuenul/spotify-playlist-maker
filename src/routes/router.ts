@@ -1,7 +1,7 @@
 import express from 'express';
-import simpleController from 'controller/simple.controller';
+import createPlaylist from '../controller/createPlaylist.controller';
 const router = express.Router()
 
-router.get("/", simpleController);
+router.post("/create-playlist", createPlaylist);
 
 export default router;
