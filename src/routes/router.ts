@@ -1,7 +1,9 @@
-import express from 'express';
+import { Router } from 'express';
 import createPlaylist from '../controller/createPlaylist.controller';
-const router = express.Router()
+import loginPlaylist from '../controller/login.controller';
+const router = Router()
 
 router.post("/create-playlist", createPlaylist);
+router.get("/login", loginPlaylist);
 
 export default router;
