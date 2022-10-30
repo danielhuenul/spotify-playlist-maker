@@ -58,6 +58,6 @@ const getTrackByTags = async (filters: string, token: string) => {
   });
 
   const resolvedTrack = await Promise.all(resolvePromises);
-  const filteredTrack = resolvedTrack.filter(track => track !== null || track !== undefined);
+  const filteredTrack = resolvedTrack.filter(track => track !== null && track !== undefined);
   return filteredTrack;
 }
