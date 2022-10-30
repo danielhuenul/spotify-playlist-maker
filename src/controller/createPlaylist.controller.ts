@@ -7,16 +7,25 @@ import {
 
 export default async (req: Request, res: Response) => {
   try {
+    console.log("✅ INICIA CONTROLADOR");
     const { filters, playlist, userId } = req.body;
-    const findedtracks = await getTrackByTags(filters);
+    const token = req.headers.token as string;
+
+    console.log("✅ INICIA getTrackByTags");
+    const findedtracks = await getTrackByTags(filters, token);
+    console.log("✅ INICIA findedtracks: ", findedtracks);
 
     if (findedtracks.length === 0) {
+      console.log("🛑 NO HAY RESULTADOS");
       return res.status(200).json({ ok: true, message: "no tracks by tags" })
     }
 
-    const { id } = await createPlaylist({ playlist, userId });
+    console.log("✅ INICIA createPlaylist");
+    const { id } = await createPlaylist({ playlist, userId, token });
+    console.log("✅ SE OBTIENEN URLS DE TRACKS");
     const uris = findedtracks.map(({ uri }) => uri);
-    const savedTracks = await addTrackToPlaylist({ id, uris })
+    console.log("✅ SE ASIGNAN TRACKS EN PLAYLIST");
+    const savedTracks = await addTrackToPlaylist({ id, uris, token })
 
     return res.status(200).json({ savedTracks })
   } catch (error) {
@@ -24,14 +33,14 @@ export default async (req: Request, res: Response) => {
   }
 }
 
-const getTrackByTags = async (filters: string) => {
+const getTrackByTags = async (filters: string, token: string) => {
   const splitedFilters = filters.split(";");
 
   const resolvePromises = splitedFilters.map(async query => {
     let isfindedQuery = false;
     let nextQuery = `query=${query}&type=track`;
     while (!isfindedQuery) {
-      const { tracks } = await getTrack(nextQuery);
+      const { tracks } = await getTrack(nextQuery, token);
 
       if (tracks.items.length === 0) {
         isfindedQuery = true;
@@ -49,6 +58,6 @@ const getTrackByTags = async (filters: string) => {
   });
 
   const resolvedTrack = await Promise.all(resolvePromises);
-  const filteredTrack = resolvedTrack.filter(track => track !== null);
+  const filteredTrack = resolvedTrack.filter(track => track !== null || track !== undefined);
   return filteredTrack;
 }
