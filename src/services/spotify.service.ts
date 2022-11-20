@@ -80,7 +80,7 @@ export const generaAuthToken = async (code: string): Promise<AuthToken> => {
   try {
     const data = QueryString.stringify({
       code,
-      redirect_uri: "http://127.0.0.1:5173/loading",
+      redirect_uri: enviroments.redirect_uri,
       grant_type: "authorization_code"
     })
 
